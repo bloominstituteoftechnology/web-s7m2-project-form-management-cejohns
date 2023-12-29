@@ -23,6 +23,11 @@ export default function App() {
   const [members, setMembers] = useState(teamMembers)
   const [editing, setEditing] = useState(null)
   // ✨ Create a third state to track the values of the inputs
+  const [formValues, setFormValues] = useState({
+    fname: '',
+    lname: '',
+    bio: '',
+  });
 
   useEffect(() => {
     // ✨ If the `editing` state changes from null to the number 2 (for example)
@@ -30,25 +35,65 @@ export default function App() {
     // with the data belonging to the member with id 2.
     // On the other hand, if the `editing` state changes back to null
     // then we need to reset the form back to empty values
-  }, [editing])
+    if (editing !== null) {
+      const memberToEdit = members.find((mem) => mem.id === editing);
+      setFormValues({
+        fname: memberToEdit.fname,
+        lname: memberToEdit.lname,
+        bio: memberToEdit.bio,
+      });
+    } else {
+      setFormValues({ fname: '', lname: '', bio: '' });
+    }
+  }, [editing, members])
 
   const onChange = evt => {
     // ✨ This is the change handler for your text inputs and your textarea.
     // You can check `evt.target.id` to know which input changed
     // and then you can use `evt.target.value` to update the state of the form
+    const { id, value } = evt.target;
+  setFormValues((prevValues) => ({
+    ...prevValues,
+    [id]: value,
+  }));
   }
   const edit = id => {
     // ✨ Put this function inside a click handler for the <button>Edit</button>.
     // It should change the value of `editing` state to be the id of the member
     // whose Edit button was clicked
+    setEditing(id);
+    const memberToEdit = members.find((mem) => mem.id === id);
+    setFormValues({
+      fname: memberToEdit.fname,
+      lname: memberToEdit.lname,
+      bio: memberToEdit.bio,
+    });
   }
   const submitNewMember = () => {
     // This takes the values of the form and constructs a new member object,
     // which is then concatenated at the end of the `members` state
+    const newMember = {
+      id: getId(),
+      fname: formValues.fname,
+      lname: formValues.lname,
+      bio: formValues.bio,
+    };
+  
+    setMembers((prevMembers) => [...prevMembers, newMember]);
+    setFormValues({ fname: '', lname: '', bio: '' });
   }
   const editExistingMember = () => {
     // ✨ This takes the values of the form and replaces the data of the
     // member in the `members` state whose id matches the `editing` state
+    setMembers((prevMembers) =>
+    prevMembers.map((mem) =>
+      mem.id === editing
+        ? { ...mem, ...formValues }
+        : mem
+    )
+  );
+  setFormValues({ fname: '', lname: '', bio: '' });
+  setEditing(null);
   }
   const onSubmit = evt => {
     // ✨ This is the submit handler for your form element.
@@ -56,48 +101,72 @@ export default function App() {
     // depending on whether the `editing` state is null or has an id in it.
     // Don't allow the page to reload! Prevent the default behavior
     // and clean up the form after submitting
+    evt.preventDefault();
+    if (editing !== null) {
+      editExistingMember();
+    } else {
+      submitNewMember();
+    }
   }
   return (
-    <div>{/* ✨ Fix the JSX by wiring the necessary values and event handlers */}
-      <div id="membersList">
-        <h2>Team Members</h2>
-        <div>
-          {
-            members.map(mem => (
-              <div key={mem.id} className="member">
-                <div>
-                  <h4>{mem.fname} {mem.lname}</h4>
-                  <p>{mem.bio}</p>
-                </div>
-                <button>Edit</button>
-              </div>
-            ))
-          }
-        </div>
-      </div>
-      <div id="membersForm">
-        <h2>{editing ? 'Edit' : 'Add'} a Team Member</h2>
-        <form>
-          <div>
-            <label htmlFor="fname">First Name </label>
-            <input id="fname" type="text" placeholder="Type First Name" />
+    <div>
+    <div id="membersList">
+      <h2>Team Members</h2>
+      <div>
+        {members.map((mem) => (
+          <div key={mem.id} className="member">
+            <div>
+              <h4>
+                {mem.fname} {mem.lname}
+              </h4>
+              <p>{mem.bio}</p>
+            </div>
+            <button onClick={() => edit(mem.id)}>Edit</button>
           </div>
-
-          <div>
-            <label htmlFor="lname">Last Name </label>
-            <input id="lname" type="text" placeholder="Type Last Name" />
-          </div>
-
-          <div>
-            <label htmlFor="bio">Bio </label>
-            <textarea id="bio" placeholder="Type Bio" />
-          </div>
-
-          <div>
-            <input type="submit" />
-          </div>
-        </form>
+        ))}
       </div>
     </div>
+    <div id="membersForm">
+      <h2>{editing ? 'Edit' : 'Add'} a Team Member</h2>
+      <form onSubmit={onSubmit}>
+        <div>
+          <label htmlFor="fname">First Name </label>
+          <input
+           id="fname"
+           type="text"
+           placeholder="Type First Name"
+           value={formValues.fname}
+           onChange={onChange}
+          />
+        </div>
+
+        <div>
+          <label htmlFor="lname">Last Name </label>
+          <input
+           id="lname"
+           type="text"
+           placeholder="Type Last Name"
+           value={formValues.lname}
+           onChange={onChange}
+          />
+        </div>
+
+        <div>
+          <label htmlFor="bio">Bio </label>
+          <textarea
+            id="bio"
+            name="bio"
+            placeholder="Type Bio"
+            value={formValues.bio}
+            onChange={onChange}
+          />
+        </div>
+
+        <div>
+          <input type="submit" />
+        </div>
+      </form>
+    </div>
+  </div>
   )
 }
